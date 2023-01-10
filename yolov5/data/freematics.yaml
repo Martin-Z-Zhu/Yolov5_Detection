@@ -1,0 +1,14 @@
+path: ../datasets/freematics
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 1
+names: ['Freematics']
+
+roboflow:
+  workspace: boa
+  project: yolov5-xfhlt
+  version: 3
+  license: MIT
+  url: https://universe.roboflow.com/boa/yolov5-xfhlt/dataset/3
