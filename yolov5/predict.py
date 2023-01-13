@@ -2,23 +2,31 @@ import torch
 import cv2
 import time
 
-model = torch.hub.load('C:\\Users\\Martin Zhu\\PycharmProjects\\ObjectDetection\\yolov5', 'custom', 'runs/train/exp4/weights/best.pt', source='local')
-model.conf = 0.6
+model = torch.hub.load('C:\\Users\\Martin Zhu\\PycharmProjects\\Yolov5_Detection\\yolov5', 'custom', 'runs/train/exp5/weights/best.pt', source='local')
+model.conf = 0.5
 
 pTime = 0
 cTime = 0
 
 print()
-print('====== Moded loading is comleted ======')
+print('====== Moded loading is completed ======')
 print()
 
+WIDTH = 1280
+HEIGHT = 720
+
+TARGET_SIZE = 32 * 8
+
 cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
 
 while True:
     img = cap.read()[1]
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = img[:,int((WIDTH - HEIGHT) / 2):int((WIDTH + HEIGHT) / 2)]
 
-    results = model(img, size=160)
+    results = model(img, size=256)
     data = results.pandas().xyxy[0]
 
     nums = len(data)

@@ -1,0 +1,13 @@
+path: ../datasets/freematicsv2
+train: train/images
+val: valid/images
+
+nc: 1
+names: ['Freematics']
+
+roboflow:
+  workspace: boa
+  project: yolo-9gqlh
+  version: 1
+  license: MIT
+  url: https://universe.roboflow.com/boa/yolo-9gqlh/dataset/1
