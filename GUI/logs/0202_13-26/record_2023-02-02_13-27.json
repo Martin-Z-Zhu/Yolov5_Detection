@@ -1,0 +1,20 @@
+{
+    "Records": {
+        "13260": {
+            "Fitting": "K025-0606",
+            "Manufacturer": "ASV",
+            "Hose": "SF2SN-06",
+            "Equipment Type": "multi-terrain-loader",
+            "Model Name": "PT50",
+            "Location": " Front"
+        },
+        "13261": {
+            "Fitting": "K025-0606",
+            "Manufacturer": "ASV",
+            "Hose": "SF2SN-06",
+            "Equipment Type": "multi-terrain-loader",
+            "Model Name": "PT50",
+            "Location": " Front"
+        }
+    }
+}

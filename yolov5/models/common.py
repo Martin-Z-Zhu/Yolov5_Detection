@@ -564,18 +564,18 @@ class DetectMultiBackend(nn.Module):
                 y = self.frozen_func(x=self.tf.constant(im))
             else:  # Lite or Edge TPU
                 input = self.input_details[0]
-                int8 = input['dtyp fe'] == np.uint8  # is TFLite quantized uint8 model
-                if int8:
-                    scale, zero_point = input['quantization']
-                    im = (im / scale + zero_point).astype(np.uint8)  # de-scale
+                # int8 = input['dtyp fe'] == np.uint8  # is TFLite quantized uint8 model
+                # if int8:
+                #     scale, zero_point = input['quantization']
+                #     im = (im / scale + zero_point).astype(np.uint8)  # de-scale
                 self.interpreter.set_tensor(input['index'], im)
                 self.interpreter.invoke()
                 y = []
                 for output in self.output_details:
                     x = self.interpreter.get_tensor(output['index'])
-                    if int8:
-                        scale, zero_point = output['quantization']
-                        x = (x.astype(np.float32) - zero_point) * scale  # re-scale
+                    # if int8:
+                    #     scale, zero_point = output['quantization']
+                    #     x = (x.astype(np.float32) - zero_point) * scale  # re-scale
                     y.append(x)
             y = [x if isinstance(x, np.ndarray) else x.numpy() for x in y]
             y[0][..., :4] *= [w, h, w, h]  # xywh normalized to pixels

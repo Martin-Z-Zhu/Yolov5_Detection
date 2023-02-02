@@ -10,6 +10,18 @@ yolo_model.allocate_tensors()
 input_details = yolo_model.get_input_details()
 output_details = yolo_model.get_output_details()
 input = input_details[0]
+box_colors = {0: (0, 255, 0),
+              1: (0, 255, 255),
+              2: (255, 255, 0),
+              3: (255, 0, 255),
+              4: (200, 0, 200),
+              5: (200, 200, 0),
+              6: (0, 200, 200),
+              7: (200, 200, 200),
+              8: (170, 170, 0),
+              9: (170, 0, 170),
+              10: (0, 170, 170)
+              }
 
 
 def run_model(im):  # returns yolov5 output tensor
@@ -27,33 +39,21 @@ def plot_boxes(image, results, preds):
     # Gets the image shape
     W, H, C = image.shape
     # Plots all the bboxes out on to the image
-    for index in results:
+    for i, index in enumerate(results):
         pred = preds[0][0][index]
         xc, yc, w, h = pred[:4]
 
-        label = "{:.2f}".format(pred[4])
-        if pred[4] <= 0.6:
-            b_color = (0, 0, 255)
-        elif 0.6 < pred[4] <= 0.75:
-            b_color = (0, 255, 255)
-        elif pred[4] > 0.75:
-            b_color = (0, 255, 0)
-
+        label = '{}'.format(i)
+        b_color = box_colors[i]
         # Computes the bbox in xyxy form
         xmin, ymin, xmax, ymax = int((xc - w / 2) * W), int((yc - h / 2) * H), int((xc + w / 2) * W), int((yc + h / 2) * H)
 
         # Draws the bbox
-        cv2.rectangle(image, (xmin, ymin), (xmax, ymax), b_color, 1)
+        cv2.rectangle(image, (xmin, ymin), (xmax, ymax), b_color, 2)
 
-        # get text size
-        (text_width, text_height), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_COMPLEX_SMALL,
-                                                              1.5, thickness=2)
-        # # put filled text rectangle
-        # cv2.rectangle(image, (xmin, ymin), (xmin + text_width, ymin - text_height - baseline), b_color, thickness=cv2.FILLED)
-        #
-        # put text above rectangle
-        cv2.putText(image, label, (xmin, ymin - 4), cv2.FONT_HERSHEY_COMPLEX_SMALL,
-                    1, b_color, 1, lineType=cv2.LINE_AA)
+        # # put text above rectangle
+        # cv2.putText(image, label, (xmin, ymin - 4), cv2.FONT_HERSHEY_COMPLEX_SMALL,
+        #             2, b_color, 2, lineType=cv2.LINE_AA)
     return image
 
 
@@ -76,7 +76,7 @@ def iou_filter(image, preds, thres=0.5, iou_thres=0.25):
 
 def iou_calculate(image, rect1, rect2):
     inter = overlap(image, rect1, rect2)
-    if inter != None:
+    if inter:
         return inter / (area(image, rect1) + area(image, rect2) - inter)
     else:
         return 0
@@ -124,68 +124,45 @@ def bbox_dist_filter(preds, thres=0.5):
     return results
 
 
-def webcam():
-    pTime = 0
-    cam = cv2.VideoCapture(0)
-    while True:
-        _, image = cam.read()
+def xywh2xyxy(image, indices, preds):
+    W, H, C = image.shape
+    result = []
+    # Plots all the bboxes out on to the image
+    for index in indices:
+        pred = preds[0][0][index]
+        xc, yc, w, h = pred[:4]
 
-        # Image preprocess
-        image = image[:, 280:1001]
+        # Computes the bbox in xyxy form
+        xmin, ymin, xmax, ymax = int((xc - w / 2) * W), int((yc - h / 2) * H), int((xc + w / 2) * W), int((yc + h / 2) * H)
+
+        result.append([xmin, ymin, xmax, ymax])
+
+    return result
+
+
+def xywh(indices, preds):
+    results = []
+    for index in indices:
+        pred = preds[0][0][index]
+        results.append(pred[:4])
+    return results
+
+
+def ann_image(image):
+    try:
         im = cv2.resize(image, (320, 320))
         im = [im.astype(np.float32) / 255]
-
         # Inference
         preds = run_model(im)
 
         # Gets the bboxes
-        bboxes = iou_filter(image, preds)
+        indices = iou_filter(image, preds, 0.5)
 
         # Plot the bboxes out on the image
-        pred_img = plot_boxes(image, bboxes, preds)
+        pred_img = plot_boxes(image, indices, preds)
 
-        cTime = time.time()
-        fps = 1 / (cTime - pTime)
-        pTime = cTime
+        bboxes = xywh(indices, preds)
 
-        cv2.putText(pred_img, "FPS: " + str(int(fps)), (5, 40), cv2.FONT_HERSHEY_PLAIN, 1.8, (0, 255, 0), 2)
-        cv2.putText(pred_img, "Detected: " + str(len(bboxes)), (5, 70), cv2.FONT_HERSHEY_PLAIN, 1.8, (0, 255, 0), 2)
-
-        # Display the image
-        cv2.imshow("img", pred_img)
-        cv2.waitKey(1)
-
-
-def ann_images():
-    dir = "/Users/cheruichang/Desktop/test_images"
-    images = os.listdir(dir)
-
-    for file in images:
-        print(file)
-        try:
-            image = cv2.imread(os.path.join(dir, file))
-
-            im = cv2.resize(image, (320, 320))
-            im = [im.astype(np.float32) / 255]
-            # Inference
-            preds = run_model(im)
-
-            # Gets the bboxes
-            bboxes = iou_filter(image, preds, 0.5)
-
-            # Plot the bboxes out on the image
-            pred_img = plot_boxes(image, bboxes, preds)
-
-            cv2.putText(pred_img, "Detected: " + str(len(bboxes)), (5, 20), cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0), 1)
-
-            # Display the image
-            cv2.imshow('img', pred_img)
-            cv2.waitKey(0)
-        except Exception as e:
-            print(e)
-            continue
-
-
-if __name__ == "__main__":
-    ann_images()
-    # webcam()
+        return pred_img, bboxes
+    except Exception as e:
+        print(e)
